@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	v1 "github.com/adityavit/proglog/api/v1"
 	"github.com/gorilla/mux"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func NewHTTPServer(addr string) *http.Server {
@@ -28,47 +30,39 @@ func newHTTPServer() *httpServer {
 	}
 }
 
-type ProduceRequest struct {
-	Record Record `json:"record"`
-}
-
-type ProduceResponse struct {
-	Offset uint64 `json:"offset"`
-}
-
-type ConsumeRequest struct {
-	Offset uint64 `json:"offset"`
-}
-
-type ConsumeResponse struct {
-	Record Record `json:"record"`
-}
-
 // handleProduce is a handler to append a record to the log
 func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
-	var req ProduceRequest
+	var req v1.ProduceRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	offset, err := s.Log.Append(req.Record)
+	record := &v1.Record{
+		Value: req.Record.Value,
+	}
+	offset, err := s.Log.Append(record)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	res := ProduceResponse{Offset: offset}
-	err = json.NewEncoder(w).Encode(res)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	res := v1.ProduceResponse{Offset: offset}
+	w.Header().Set("Content-Type", "application/json")
 
+	// Marshal using protojson to ensure defaults are included
+	jsonBytes, err := protojson.MarshalOptions{
+		EmitUnpopulated: true,
+	}.Marshal(&res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonBytes)
 }
 
 // handleConsume is a handler to read a record from the log
 func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
-	var req ConsumeRequest
+	var req v1.ConsumeRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -79,10 +73,14 @@ func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	res := ConsumeResponse{Record: record}
-	err = json.NewEncoder(w).Encode(res)
+	res := v1.ConsumeResponse{Record: record}
+	w.Header().Set("Content-Type", "application/json")
+	jsonBytes, err := protojson.MarshalOptions{
+		EmitUnpopulated: true,
+	}.Marshal(&res)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Write(jsonBytes)
 }

@@ -3,16 +3,13 @@ package server
 import (
 	"errors"
 	"sync"
+
+	v1 "github.com/adityavit/proglog/api/v1"
 )
 
 type Log struct {
 	mu      sync.Mutex
-	records []Record
-}
-
-type Record struct {
-	Value  []byte `json:"value"`
-	Offset uint64 `json:"offset"`
+	records []*v1.Record
 }
 
 var ErrOffsetNotFound = errors.New("offset not found")
@@ -22,7 +19,7 @@ func NewLog() *Log {
 }
 
 // Append adds a record to the log and returns the offset of the record
-func (c *Log) Append(record Record) (uint64, error) {
+func (c *Log) Append(record *v1.Record) (uint64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	record.Offset = uint64(len(c.records))
@@ -31,11 +28,11 @@ func (c *Log) Append(record Record) (uint64, error) {
 }
 
 // Read takes in a offset and returns the record at that offset
-func (c *Log) Read(offset uint64) (Record, error) {
+func (c *Log) Read(offset uint64) (*v1.Record, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if offset >= uint64(len(c.records)) {
-		return Record{}, ErrOffsetNotFound
+		return &v1.Record{}, ErrOffsetNotFound
 	}
 	return c.records[offset], nil
 }
