@@ -9,6 +9,7 @@ GOGET=$(GOCMD) get
 
 # Protoc parameters
 PROTOC=protoc
+PROTOC_VERSION=3.20.3
 PROTO_PATH=api/v1
 GO_OUT=api/v1
 
@@ -47,9 +48,9 @@ test:
 
 # Install Protoc
 install_protoc:
-	curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
-	unzip -o protoc-3.20.3-linux-x86_64.zip -d /usr/local
-	rm -f protoc-3.20.3-linux-x86_64.zip
+	curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-linux-x86_64.zip
+	sudo unzip -o protoc-$(PROTOC_VERSION)-linux-x86_64.zip -d /usr/local
+	rm -f protoc-$(PROTOC_VERSION)-linux-x86_64.zip
 	protoc --version
 
 # Get dependencies
