@@ -45,6 +45,13 @@ clean:
 test:
 	$(GOTEST) -race -v ./...
 
+# Install Protoc
+install_protoc:
+	curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+	unzip -o protoc-3.20.3-linux-x86_64.zip -d /usr/local
+	rm -f protoc-3.20.3-linux-x86_64.zip
+	protoc --version
+
 # Get dependencies
 deps:
 	$(GOGET) ./...

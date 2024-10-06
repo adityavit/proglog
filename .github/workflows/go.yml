@@ -21,6 +21,9 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
+    - name: Install Protoc
+      run: make install_protoc
+
     - name: Get dependencies
       run: |
         make deps
