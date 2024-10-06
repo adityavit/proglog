@@ -94,13 +94,20 @@ func (s *store) Read(pos uint64) ([]byte, error) {
 }
 
 // ReadAt reads the record at the given position
-func (s *store) ReadAt(p []byte, off int64) (int, error) {
+func (s *store) ReadAt(buffer []byte, startPosition int64) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Check if file is closed
+	_, err := s.file.Stat()
+	if err != nil {
+		return 0, fmt.Errorf("log file is closed or inaccessible: %w", err)
+	}
+
 	if err := s.buf.Flush(); err != nil {
 		return 0, err
 	}
-	return s.file.ReadAt(p, off)
+	return s.file.ReadAt(buffer, startPosition)
 }
 
 // Close closes the store and flushes any buffered data to the underlying file
@@ -111,4 +118,8 @@ func (s *store) Close() error {
 		return err
 	}
 	return s.file.Close()
+}
+
+func (s *store) Name() string {
+	return s.file.Name()
 }

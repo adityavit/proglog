@@ -16,14 +16,14 @@ const (
 	entryWidth    = offsetWidth + positionWidth
 )
 
-type Index struct {
+type index struct {
 	file *os.File
 	mmap mmap.MMap
 	size uint64
 }
 
-func newIndex(f *os.File, c Config) (*Index, error) {
-	idx := &Index{
+func newIndex(f *os.File, c Config) (*index, error) {
+	idx := &index{
 		file: f,
 	}
 	fi, err := os.Stat(f.Name())
@@ -43,7 +43,7 @@ func newIndex(f *os.File, c Config) (*Index, error) {
 	return idx, nil
 }
 
-func (i *Index) Close() error {
+func (i *index) Close() error {
 	if err := i.mmap.Flush(); err != nil {
 		return err
 	}
@@ -63,11 +63,12 @@ func (i *Index) Close() error {
 }
 
 // Read takes an index offset and returns the associated record offset and position in the store
-func (i *Index) Read(offset int64) (out uint32, pos uint64, err error) {
+func (i *index) Read(offset int64) (out uint32, pos uint64, err error) {
 	if i.size == 0 {
 		return 0, 0, io.EOF
 	}
 	if offset == -1 {
+		// If offset is -1, we are reading the last entry
 		out = uint32(i.size/entryWidth) - 1
 	} else {
 		out = uint32(offset)
@@ -82,7 +83,7 @@ func (i *Index) Read(offset int64) (out uint32, pos uint64, err error) {
 }
 
 // Write takes an offset and a position and writes the record to the index
-func (i *Index) Write(offset uint32, pos uint64) error {
+func (i *index) Write(offset uint32, pos uint64) error {
 	if uint64(len(i.mmap)) < i.size+entryWidth {
 		return io.EOF
 	}
@@ -92,10 +93,10 @@ func (i *Index) Write(offset uint32, pos uint64) error {
 	return nil
 }
 
-func (i *Index) Name() string {
+func (i *index) Name() string {
 	return i.file.Name()
 }
 
-func (i *Index) Size() uint64 {
+func (i *index) Size() uint64 {
 	return i.size
 }
