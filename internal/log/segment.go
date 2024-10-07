@@ -50,6 +50,7 @@ func NewSegment(dir string, baseOffset uint64, c Config) (*Segment, error) {
 }
 
 func (s *Segment) Append(record *v1.Record) (offset uint64, err error) {
+	// log.Printf("Appending record to segment %v", s)
 	cur := s.nextOffset
 	record.Offset = cur
 	p, err := proto.Marshal(record)
@@ -57,6 +58,7 @@ func (s *Segment) Append(record *v1.Record) (offset uint64, err error) {
 		return 0, err
 	}
 	_, pos, err := s.store.Append(p)
+	// fmt.Printf("n: %d, pos: %d, curOffset: %d\n", n, pos, cur)
 	if err != nil {
 		return 0, err
 	}
