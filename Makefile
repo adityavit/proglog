@@ -63,3 +63,18 @@ deps:
 all: build run
 
 .PHONY: build compile_proto run clean test deps all
+
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: lint
+lint:
+	@if ! command -v golangci-lint &> /dev/null; then \
+		echo "golangci-lint not found, installing..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	fi
+	golangci-lint run
+
+.PHONY: check
+check: vet lint test
