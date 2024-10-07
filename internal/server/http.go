@@ -6,27 +6,33 @@ import (
 	"net/http"
 
 	v1 "github.com/adityavit/proglog/api/v1"
+	"github.com/adityavit/proglog/internal/log"
 	"github.com/gorilla/mux"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func NewHTTPServer(addr string) *http.Server {
-	httpServer := newHTTPServer()
+func NewHTTPServer(logDir, addr string) (*http.Server, error) {
+	logConfig := log.Config{}
+	log, err := log.NewLog(logDir, logConfig)
+	if err != nil {
+		return nil, err
+	}
+	httpServer := newHTTPServer(log)
 	server := &http.Server{Addr: addr}
 	router := mux.NewRouter()
 	router.HandleFunc("/", httpServer.handleProduce).Methods("POST")
 	router.HandleFunc("/", httpServer.handleConsume).Methods("GET")
 	server.Handler = router
-	return server
+	return server, nil
 }
 
 type httpServer struct {
-	Log *Log
+	Log *log.Log
 }
 
-func newHTTPServer() *httpServer {
+func newHTTPServer(log *log.Log) *httpServer {
 	return &httpServer{
-		Log: NewLog(),
+		Log: log,
 	}
 }
 
