@@ -9,19 +9,38 @@ message Record {
     uint64 offset = 2;
 }
 
+// ProduceRequest is the request to produce a record to the log
 message ProduceRequest {
     Record record = 1;
 }
 
+// ProduceResponse is the response to a Produce request, containing the offset of the produced record
 message ProduceResponse {
     uint64 offset = 1;
 }
 
+// ConsumeRequest is the request to consume a record from the log, provided at the given offset
 message ConsumeRequest {
     uint64 offset = 1;
 }
 
+// ConsumeResponse is the response to consume a record from the log, provided at the given offset
 message ConsumeResponse {
     Record record = 1;
+}
+
+// Log is the service that provides the interface to the log
+service Log {
+    // Produce is a unary RPC that produces a record to the log and returns the offset of the produced record
+    rpc Produce(ProduceRequest) returns (ProduceResponse) {}
+
+    // Consume is a unary RPC that consumes a record at the given offset and returns the record
+    rpc Consume(ConsumeRequest) returns (ConsumeResponse) {}
+
+    // ConsumeStream is a server-side streaming RPC that consumes an offset and returns a stream of records from that offset
+    rpc ConsumeStream(ConsumeRequest) returns (stream ConsumeResponse) {}
+
+    // ProduceStream is a client-side streaming RPC that produces a stream of records to the log, returning a stream of offsets
+    rpc ProduceStream(stream ProduceRequest) returns (stream ProduceResponse) {}
 }
 
